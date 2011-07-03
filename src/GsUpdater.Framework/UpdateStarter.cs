@@ -2,10 +2,8 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
-using Microsoft.Win32.SafeHandles;
-using System.Collections.Generic;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.IO.Pipes;
+
 // Used for the named pipes implementation
 
 namespace GsUpdater.Framework
@@ -16,111 +14,58 @@ namespace GsUpdater.Framework
     /// </summary>
     internal class UpdateStarter
     {
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern SafeFileHandle CreateNamedPipe(
-           String pipeName,
-           uint dwOpenMode,
-           uint dwPipeMode,
-           uint nMaxInstances,
-           uint nOutBufferSize,
-           uint nInBufferSize,
-           uint nDefaultTimeOut,
-           IntPtr lpSecurityAttributes);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern int ConnectNamedPipe(
-           SafeFileHandle hNamedPipe,
-           IntPtr lpOverlapped);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern SafeFileHandle CreateFile(
-           String pipeName,
-           uint dwDesiredAccess,
-           uint dwShareMode,
-           IntPtr lpSecurityAttributes,
-           uint dwCreationDisposition,
-           uint dwFlagsAndAttributes,
-           IntPtr hTemplate);
-
-        //private const uint DUPLEX = (0x00000003);
-        private const uint WRITE_ONLY = (0x00000002);
-        private const uint FILE_FLAG_OVERLAPPED = (0x40000000);
-
-        internal string PIPE_NAME { get { return string.Format("\\\\.\\pipe\\{0}", _syncProcessName); } }
-        internal uint BUFFER_SIZE = 4096;
-
         private readonly string _updaterPath;
-        private readonly Dictionary<string, object> _updateData;
-        private readonly string _syncProcessName;
+        private readonly string _sourcePath;
+        private readonly string _applicationPath;
 
-        public UpdateStarter(string pathWhereUpdateExeShouldBeCreated,
-            Dictionary<string, object> updateData, string syncProcessName)
+        public UpdateStarter(string pathWhereUpdateExeShouldBeCreated, string sourcePath, string applicationPath)
         {
             _updaterPath = pathWhereUpdateExeShouldBeCreated;
-            _updateData = updateData;
-            _syncProcessName = syncProcessName;
+            _sourcePath = sourcePath;
+            _applicationPath = applicationPath;
         }
 
         public bool Start()
         {
-            ExtractUpdaterFromResource(); //take the update executable and extract it to the path where it should be created
+            ExtractUpdaterFromResource();
 
-            using (var clientPipeHandle = CreateNamedPipe(
-                   PIPE_NAME,
-                   WRITE_ONLY | FILE_FLAG_OVERLAPPED,
-                   0,
-                   1, // 1 max instance (only the updater utility is expected to connect)
-                   BUFFER_SIZE,
-                   BUFFER_SIZE,
-                   0,
-                   IntPtr.Zero))
+            using (NamedPipeServerStream pipeServer = new NamedPipeServerStream("gsupdater", PipeDirection.Out))
             {
-                //failed to create named pipe
-                if (clientPipeHandle.IsInvalid)
-                    return false;
+                ExecuteUpdater();
 
-                var info = new ProcessStartInfo
-                           	{
-                           		UseShellExecute = false,
-                           		WorkingDirectory = Environment.CurrentDirectory,
-                           		FileName = _updaterPath,
-                           		Arguments = string.Format(@"""{0}""", _syncProcessName),
-                           	};
-            	try
-                {
-                    Process.Start(info);
-                }
-                catch (Win32Exception)
-                {
-                    // Person denied UAC escallation
-                    return false;
-                }
+                pipeServer.WaitForConnection();
 
-                while (true)
+                try
                 {
-                    var success = 0;
-                    try
+                    using (StreamWriter sw = new StreamWriter(pipeServer))
                     {
-                        success = ConnectNamedPipe(
-                           clientPipeHandle,
-                           IntPtr.Zero);
-                    }
-                    catch { }
-
-                    //failed to connect client pipe
-                    if (success == 0)
-                        break;
-
-                    //client connection successfull
-                    using (var fStream = new FileStream(clientPipeHandle, FileAccess.Write, (int)BUFFER_SIZE, true))
-                    {
-                        new BinaryFormatter().Serialize(fStream, _updateData);
-                        fStream.Close();
+                        sw.AutoFlush = true;
+                        sw.WriteLine(_sourcePath);
+                        sw.WriteLine(_applicationPath);
                     }
                 }
+                catch (IOException e)
+                {
+                    return false;
+                }
+                //return true;
             }
 
+            Environment.Exit(0);
             return true;
+        }
+
+        private void ExecuteUpdater()
+        {
+            try
+            {
+                var process = new Process { StartInfo = { FileName = _updaterPath } }; // file to executing
+                process.Start();
+            }
+            catch (Win32Exception)
+            {
+                // Person denied UAC escallation
+            }
         }
 
         private void ExtractUpdaterFromResource()

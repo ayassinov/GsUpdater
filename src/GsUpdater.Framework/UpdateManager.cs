@@ -80,34 +80,21 @@ namespace GsUpdater.Framework
 
             UpdaterTempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
 
-            var parameters = new Dictionary<string, object>();
-
-            // Add some environment variables to the dictionary object which will be passed to the updater
-            parameters["AppPath"] = ApplicationPath;
-            parameters["TempFolder"] = UpdaterTempPath;
-            parameters["SourcePath"] = TempPath;
-
             if (!Directory.Exists(UpdaterTempPath))
                 Directory.CreateDirectory(UpdaterTempPath);
 
             // Naming it updater.exe seem to trigger the UAC, and we don't want that
-            var updStarter = new UpdateStarter(Path.Combine(UpdaterTempPath, "foo.exe"), parameters,
-                                               UpdateProcessName);
-            bool createdNew;
-            using (var _ = new Mutex(true, UpdateProcessName, out createdNew))
-            {
-                if (!updStarter.Start())
-                    return false;
+            var updStarter = new UpdateStarter(Path.Combine(UpdaterTempPath, "foo.exe"), TempPath, ApplicationPath);
 
-                Environment.Exit(0);
-            }
+            if (!updStarter.Start())
+                return false;
 
+            //Environment.Exit(0);
 
             // State = UpdateProcessState.AppliedSuccessfully;
             //UpdatesToApply.Clear();
 
             return true;
-
         }
 
         public void Clear()
