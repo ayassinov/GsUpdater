@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("NAppUpdate - .NET Application Updater")]
+[assembly: AssemblyTitle("GsUpdater - .NET Application Updater")]
 [assembly: AssemblyDescription("Update executable for updating .NET applications")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Itamar Syn-Hershko")]
-[assembly: AssemblyProduct("NAppUpdate.Updater")]
-[assembly: AssemblyCopyright("Copyright © 2010 Itamar Syn-Hershko")]
+[assembly: AssemblyCompany("GlagSoftware")]
+[assembly: AssemblyProduct("GsUpdater.Updater")]
+[assembly: AssemblyCopyright("Copyright © 2011 GlagSoftware")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

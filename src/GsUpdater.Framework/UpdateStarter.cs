@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
+using System.Windows.Forms;
 
 // Used for the named pipes implementation
 
@@ -25,10 +26,10 @@ namespace GsUpdater.Framework
             _applicationPath = applicationPath;
         }
 
-        public bool Start()
+        public void Start()
         {
             ExtractUpdaterFromResource();
-
+            bool isStarted;
             using (NamedPipeServerStream pipeServer = new NamedPipeServerStream("gsupdater", PipeDirection.Out))
             {
                 ExecuteUpdater();
@@ -43,16 +44,18 @@ namespace GsUpdater.Framework
                         sw.WriteLine(_sourcePath);
                         sw.WriteLine(_applicationPath);
                     }
+                    isStarted = true;
                 }
                 catch (IOException e)
                 {
-                    return false;
+                    MessageBox.Show(e.Message);
+                    isStarted = false;
                 }
                 //return true;
             }
 
-            Environment.Exit(0);
-            return true;
+            if (isStarted)
+                Environment.Exit(0);
         }
 
         private void ExecuteUpdater()
@@ -62,8 +65,9 @@ namespace GsUpdater.Framework
                 var process = new Process { StartInfo = { FileName = _updaterPath } }; // file to executing
                 process.Start();
             }
-            catch (Win32Exception)
+            catch (Win32Exception e)
             {
+                MessageBox.Show(e.Message);
                 // Person denied UAC escallation
             }
         }

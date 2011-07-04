@@ -70,12 +70,12 @@ namespace GsUpdater.Framework
             return isPrepared;
         }
 
-        public bool DoUpdate()
+        public void DoUpdate()
         {
             if (!PrepareUpdate())
             {
                 //show error.
-                return false;
+                return;
             }
 
             UpdaterTempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
@@ -84,17 +84,13 @@ namespace GsUpdater.Framework
                 Directory.CreateDirectory(UpdaterTempPath);
 
             // Naming it updater.exe seem to trigger the UAC, and we don't want that
-            var updStarter = new UpdateStarter(Path.Combine(UpdaterTempPath, "foo.exe"), TempPath, ApplicationPath);
-
-            if (!updStarter.Start())
-                return false;
+            var updStarter = new UpdateStarter(Path.Combine(UpdaterTempPath, "GsUpdater.exe"), TempPath, ApplicationPath);
+            updStarter.Start();
 
             //Environment.Exit(0);
 
             // State = UpdateProcessState.AppliedSuccessfully;
             //UpdatesToApply.Clear();
-
-            return true;
         }
 
         public void Clear()

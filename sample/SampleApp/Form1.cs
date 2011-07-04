@@ -19,10 +19,15 @@ namespace SampleApp
             
         }
 
+        public string Param1 { get; set; }
+
+        public string Param2 { get; set; }
+
         private void Form1_Load(object sender, EventArgs e)
         {
             Text = "Version " + Assembly.GetExecutingAssembly().GetName().Version.ToString();
             btnInstall.Enabled = false;
+            lblNewVersion.Text = Param1 + @" " + Param2;
         }
 
         private void btnCheck_Click(object sender, EventArgs e)

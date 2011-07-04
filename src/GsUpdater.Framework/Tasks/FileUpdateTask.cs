@@ -28,7 +28,7 @@ namespace GsUpdater.Framework.Tasks
         {
             try
             {
-               if (!Directory.Exists(UpdateManager.Instance.TempPath))
+                if (!Directory.Exists(UpdateManager.Instance.TempPath))
                     Directory.CreateDirectory(UpdateManager.Instance.TempPath);
 
                 //download zip file to tmp folder.))

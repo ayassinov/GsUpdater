@@ -1,0 +1,12 @@
+
+_ReSharper.GsUpdater/
+tst/GsUpdater.Framework.Test/bin/
+sample/SampleApp/bin/
+sample/SampleApp/obj/x86/
+src/GsUpdater.Framework/bin/
+src/GsUpdater.Framework/obj/
+src/GsUpdater.Updater/bin/
+tst/GsUpdater.Framework.Test/obj/
+src/GsUpdater.Updater/obj
+GsUpdater.5.1.ReSharper.user
+GsUpdater.suo
