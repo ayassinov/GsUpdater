@@ -28,53 +28,51 @@ namespace GsUpdater.Framework
 
         public void Start()
         {
-            ExtractUpdaterFromResource();
-            bool isStarted;
-            using (NamedPipeServerStream pipeServer = new NamedPipeServerStream("gsupdater", PipeDirection.Out))
+            try
             {
-                ExecuteUpdater();
+                ExtractUpdaterFromResource();
 
-                pipeServer.WaitForConnection();
-
-                try
+                using (NamedPipeServerStream pipeServer = new NamedPipeServerStream("gsupdater", PipeDirection.Out))
                 {
+                    ExecuteUpdater();
+
+                    pipeServer.WaitForConnection();
+
                     using (StreamWriter sw = new StreamWriter(pipeServer))
                     {
                         sw.AutoFlush = true;
                         sw.WriteLine(_sourcePath);
                         sw.WriteLine(_applicationPath);
                     }
-                    isStarted = true;
-                }
-                catch (IOException e)
-                {
-                    MessageBox.Show(e.Message);
-                    isStarted = false;
-                }
-                //return true;
-            }
 
-            if (isStarted)
-                Environment.Exit(0);
+                    Environment.Exit(0);
+                }
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(@"Une erreur s'est produite lors du démarrage de la mise à jour de l'application"
+                         + Environment.NewLine
+                         + @"Detail du message :"
+                         + Environment.NewLine
+                         + e.Message);
+            }
         }
 
         private void ExecuteUpdater()
         {
-            try
-            {
-                var process = new Process { StartInfo = { FileName = _updaterPath } }; // file to executing
-                process.Start();
-            }
-            catch (Win32Exception e)
-            {
-                MessageBox.Show(e.Message);
-                // Person denied UAC escallation
-            }
+            var process = new Process
+                              {
+                                  StartInfo =
+                                      {
+                                          //WorkingDirectory = Path.GetDirectoryName(_updaterPath),
+                                          FileName = _updaterPath
+                                      }
+                              };
+            process.Start();
         }
 
         private void ExtractUpdaterFromResource()
         {
-            //store the updater temporarily in the designated folder            
             using (var writer = new BinaryWriter(File.Open(_updaterPath, FileMode.Create)))
                 writer.Write(Resources.Updater);
         }

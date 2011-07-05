@@ -10,3 +10,5 @@ tst/GsUpdater.Framework.Test/obj/
 src/GsUpdater.Updater/obj
 GsUpdater.5.1.ReSharper.user
 GsUpdater.suo
+src/UpdateCreator/obj/x86/Debug/
+src/UpdateCreator/bin/

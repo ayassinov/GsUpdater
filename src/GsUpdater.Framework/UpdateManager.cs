@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Threading;
+using System.Windows.Forms;
 using GsUpdater.Framework.FeedReader;
 using GsUpdater.Framework.Sources;
 using GsUpdater.Framework.Tasks;
@@ -11,10 +12,9 @@ namespace GsUpdater.Framework
 {
     public class UpdateManager
     {
-        private const string UpdateProcessName = "GsUpdateProcess";
-
         public string TempPath { get; private set; }
         public string UrlFeed { get; set; }
+        public UpdatingState State { get; set; }
 
         private string ApplicationPath { get; set; }
         private string UpdaterTempPath { get; set; }
@@ -22,18 +22,15 @@ namespace GsUpdater.Framework
         public IUpdateTask CurrentUpdate { get; private set; }
         private IUpdateSource CurrentSourceUpdate { get; set; }
 
-
         private Version CurrentVersion
         {
             get { return Assembly.GetExecutingAssembly().GetName().Version; }
-
         }
 
         private UpdateManager()
         {
-            //State = UpdateProcessState.NotChecked;
+            State = UpdatingState.NotChecked;
             ApplicationPath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
-            //BackupFolder = Path.Combine(Path.GetDirectoryName(ApplicationPath) ?? string.Empty, "Backup");
         }
 
         private static readonly UpdateManager _instance = new UpdateManager();
@@ -45,10 +42,22 @@ namespace GsUpdater.Framework
 
         public bool CheckForUpdate()
         {
-            CurrentSourceUpdate = new WebSource();
-            CurrentUpdate = new AppcastReader().Read(CurrentSourceUpdate.GetUpdatesFeed(UrlFeed));
-            int cpr = CurrentUpdate.FileVersion.CompareTo(CurrentVersion);
-            return cpr > 0;
+            try
+            {
+                CurrentSourceUpdate = new WebSource();
+                CurrentUpdate = new AppcastReader().Read(CurrentSourceUpdate.GetUpdatesFeed(UrlFeed));
+                int cpr = CurrentUpdate.FileVersion.CompareTo(CurrentVersion);
+                return cpr > 0;
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(@"Une erreur s'est produite lors de la vérification des mises à jours."
+                    + Environment.NewLine
+                    + @"Detail de l'erreur :"
+                    + Environment.NewLine
+                    + e.Message);
+                return false;
+            }
         }
 
         public bool CheckForUpdate(string feedUrl)
@@ -59,38 +68,45 @@ namespace GsUpdater.Framework
 
         private bool PrepareUpdate()
         {
-            if (CurrentUpdate == null)
-                return false; //todo throw exception, nothing to update.
+            try
+            {
+                if (CurrentUpdate == null)
+                    throw new Exception("Aucune mise à jour n'a été tourvé.");
 
-            //set a new temp folder
-            TempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+                TempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
 
-            var isPrepared = CurrentUpdate.Prepare(CurrentSourceUpdate);
-
-            return isPrepared;
+                return CurrentUpdate.Prepare(CurrentSourceUpdate);
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(@"Une erreur s'est produite lors de préparation de la mise à jour."
+                 + Environment.NewLine
+                 + @"Detail de l'erreur :"
+                 + Environment.NewLine
+                 + Environment.NewLine
+                 + e.Message);
+                return false;
+            }
         }
 
         public void DoUpdate()
         {
             if (!PrepareUpdate())
-            {
-                //show error.
                 return;
-            }
 
             UpdaterTempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
 
             if (!Directory.Exists(UpdaterTempPath))
                 Directory.CreateDirectory(UpdaterTempPath);
 
-            // Naming it updater.exe seem to trigger the UAC, and we don't want that
-            var updStarter = new UpdateStarter(Path.Combine(UpdaterTempPath, "GsUpdater.exe"), TempPath, ApplicationPath);
+            var updStarter = new UpdateStarter(
+                Path.Combine(UpdaterTempPath, "GsUpdater.exe"),
+                TempPath,
+                ApplicationPath);
+
             updStarter.Start();
 
-            //Environment.Exit(0);
-
-            // State = UpdateProcessState.AppliedSuccessfully;
-            //UpdatesToApply.Clear();
+            State = UpdatingState.Updated;
         }
 
         public void Clear()
@@ -99,6 +115,27 @@ namespace GsUpdater.Framework
                 return;
 
             CurrentUpdate.Clear();
+        }
+
+        public void Clear(string[] args)
+        {
+            try
+            {
+                if (args != null && args.Length > 0)
+                {
+                    var folders = args[0].Split(';');
+
+                    foreach (var folder in folders)
+                    {
+                        if (Directory.Exists(folder))
+                            Directory.Delete(folder, true);
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                //silent clearing
+            }
         }
     }
 }

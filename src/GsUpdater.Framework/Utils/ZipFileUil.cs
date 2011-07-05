@@ -19,7 +19,6 @@ namespace GsUpdater.Framework.Utils
             }
             catch (Exception)
             {
-                //todo throw a custom exception
                 throw;
             }
         }
