@@ -12,3 +12,5 @@ GsUpdater.5.1.ReSharper.user
 GsUpdater.suo
 src/UpdateCreator/obj/x86/Debug/
 src/UpdateCreator/bin/
+*.ReSharper.user
+*.suo

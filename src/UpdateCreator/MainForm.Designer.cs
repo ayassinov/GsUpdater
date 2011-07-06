@@ -35,18 +35,19 @@
             this.btnFermer = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.btnOuvrirDestination = new System.Windows.Forms.Button();
+            this.btnDetail = new System.Windows.Forms.Button();
             this.btnOuvrirSource = new System.Windows.Forms.Button();
             this.fldSource = new System.Windows.Forms.FolderBrowserDialog();
             this.fldDestination = new System.Windows.Forms.FolderBrowserDialog();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.txtDescription = new System.Windows.Forms.TextBox();
+            this.txtUrl = new System.Windows.Forms.TextBox();
             this.txtNom = new System.Windows.Forms.TextBox();
+            this.label4 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.txtVersion = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
-            this.label4 = new System.Windows.Forms.Label();
-            this.txtUrl = new System.Windows.Forms.TextBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
@@ -55,8 +56,9 @@
             // 
             this.txtSource.Location = new System.Drawing.Point(13, 41);
             this.txtSource.Name = "txtSource";
-            this.txtSource.Size = new System.Drawing.Size(343, 20);
+            this.txtSource.Size = new System.Drawing.Size(298, 20);
             this.txtSource.TabIndex = 0;
+            this.txtSource.Leave += new System.EventHandler(this.txtSource_Leave);
             // 
             // txtDestination
             // 
@@ -95,16 +97,19 @@
             // 
             // btnFermer
             // 
+            this.btnFermer.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.btnFermer.Location = new System.Drawing.Point(257, 356);
             this.btnFermer.Name = "btnFermer";
             this.btnFermer.Size = new System.Drawing.Size(75, 23);
             this.btnFermer.TabIndex = 5;
             this.btnFermer.Text = "Quitter";
             this.btnFermer.UseVisualStyleBackColor = true;
+            this.btnFermer.Click += new System.EventHandler(this.btnFermer_Click);
             // 
             // groupBox1
             // 
             this.groupBox1.Controls.Add(this.btnOuvrirDestination);
+            this.groupBox1.Controls.Add(this.btnDetail);
             this.groupBox1.Controls.Add(this.btnOuvrirSource);
             this.groupBox1.Controls.Add(this.txtSource);
             this.groupBox1.Controls.Add(this.txtDestination);
@@ -118,21 +123,33 @@
             // 
             // btnOuvrirDestination
             // 
+            this.btnOuvrirDestination.Image = global::UpdateCreator.ImageResource.Find;
             this.btnOuvrirDestination.Location = new System.Drawing.Point(362, 85);
             this.btnOuvrirDestination.Name = "btnOuvrirDestination";
             this.btnOuvrirDestination.Size = new System.Drawing.Size(39, 20);
             this.btnOuvrirDestination.TabIndex = 5;
-            this.btnOuvrirDestination.Text = "...";
             this.btnOuvrirDestination.UseVisualStyleBackColor = true;
             this.btnOuvrirDestination.Click += new System.EventHandler(this.btnOuvrirDestination_Click);
             // 
+            // btnDetail
+            // 
+            this.btnDetail.Enabled = false;
+            this.btnDetail.Image = global::UpdateCreator.ImageResource.List;
+            this.btnDetail.Location = new System.Drawing.Point(362, 40);
+            this.btnDetail.Name = "btnDetail";
+            this.btnDetail.Size = new System.Drawing.Size(39, 20);
+            this.btnDetail.TabIndex = 4;
+            this.btnDetail.UseVisualStyleBackColor = true;
+            this.btnDetail.Click += new System.EventHandler(this.btnDetail_Click);
+            // 
             // btnOuvrirSource
             // 
-            this.btnOuvrirSource.Location = new System.Drawing.Point(362, 41);
+            this.btnOuvrirSource.Image = global::UpdateCreator.ImageResource.Find;
+            this.btnOuvrirSource.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnOuvrirSource.Location = new System.Drawing.Point(317, 40);
             this.btnOuvrirSource.Name = "btnOuvrirSource";
             this.btnOuvrirSource.Size = new System.Drawing.Size(39, 20);
             this.btnOuvrirSource.TabIndex = 4;
-            this.btnOuvrirSource.Text = "...";
             this.btnOuvrirSource.UseVisualStyleBackColor = true;
             this.btnOuvrirSource.Click += new System.EventHandler(this.btnOuvrirSource_Click);
             // 
@@ -161,12 +178,28 @@
             this.txtDescription.Size = new System.Drawing.Size(385, 67);
             this.txtDescription.TabIndex = 7;
             // 
+            // txtUrl
+            // 
+            this.txtUrl.Location = new System.Drawing.Point(12, 87);
+            this.txtUrl.Name = "txtUrl";
+            this.txtUrl.Size = new System.Drawing.Size(385, 20);
+            this.txtUrl.TabIndex = 5;
+            // 
             // txtNom
             // 
             this.txtNom.Location = new System.Drawing.Point(140, 39);
             this.txtNom.Name = "txtNom";
             this.txtNom.Size = new System.Drawing.Size(257, 20);
             this.txtNom.TabIndex = 5;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(12, 71);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(35, 13);
+            this.label4.TabIndex = 6;
+            this.label4.Text = "URL :";
             // 
             // label2
             // 
@@ -202,26 +235,12 @@
             this.label1.TabIndex = 4;
             this.label1.Text = "Description";
             // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(12, 71);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(35, 13);
-            this.label4.TabIndex = 6;
-            this.label4.Text = "URL :";
-            // 
-            // txtUrl
-            // 
-            this.txtUrl.Location = new System.Drawing.Point(12, 87);
-            this.txtUrl.Name = "txtUrl";
-            this.txtUrl.Size = new System.Drawing.Size(385, 20);
-            this.txtUrl.TabIndex = 5;
-            // 
             // MainForm
             // 
+            this.AcceptButton = this.BtnConfimer;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.CancelButton = this.btnFermer;
             this.ClientSize = new System.Drawing.Size(431, 389);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
@@ -232,9 +251,7 @@
             this.MinimizeBox = false;
             this.Name = "MainForm";
             this.Padding = new System.Windows.Forms.Padding(9);
-            this.ShowIcon = false;
-            this.ShowInTaskbar = false;
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "MainForm";
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
@@ -266,6 +283,7 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.TextBox txtUrl;
         private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Button btnDetail;
 
     }
 }

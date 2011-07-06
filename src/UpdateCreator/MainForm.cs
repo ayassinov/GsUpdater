@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Linq;
@@ -10,18 +12,34 @@ namespace UpdateCreator
 {
     partial class MainForm : Form
     {
+        private const string XmlFileName = "UpdateFeed.xml";
+
+        private List<string> Files = new List<string>();
+
         public MainForm()
         {
             InitializeComponent();
-            this.Text = String.Format("UpdateCreator {0}", Assembly.GetExecutingAssembly().GetName().Version.ToString());
+            this.Text = String.Format("Update Creator {0}", Assembly.GetExecutingAssembly().GetName().Version.ToString());
+            this.txtUrl.Text = "https://github.com/ayassinov/GsCommande/downloads/";
         }
 
         private void btnOuvrirSource_Click(object sender, EventArgs e)
         {
 
+            btnDetail.Enabled = (!string.IsNullOrEmpty(txtSource.Text) && Directory.Exists(txtSource.Text));
             if (fldSource.ShowDialog() == DialogResult.OK)
             {
                 txtSource.Text = fldSource.SelectedPath;
+                btnDetail.Enabled = true;
+                LoadFiles();
+            }
+        }
+
+        private void LoadFiles()
+        {
+            foreach (var file in Directory.GetFiles(fldSource.SelectedPath))
+            {
+                Files.Add(Path.GetFileName(file));
             }
         }
 
@@ -29,34 +47,13 @@ namespace UpdateCreator
         {
             if (fldDestination.ShowDialog() == DialogResult.OK)
             {
-                txtDestination.Text = fldSource.SelectedPath;
+                txtDestination.Text = fldDestination.SelectedPath;
             }
         }
 
         private void BtnConfimer_Click(object sender, EventArgs e)
         {
-
-            //validate folder
-
-            //read from source
-
-            //compress zip file
-
-            //save it in destination folder
-
-            //create xml file
-
-
-            //save it in destination folder
-
-            //open destination folder on explorer
-
-            var filePath = string.Empty;
-
-            string argument = @"/select, " + filePath;
-
-            System.Diagnostics.Process.Start("explorer.exe", argument);
-
+            ExportFiles();
         }
 
         private bool ValidateFolders()
@@ -70,6 +67,18 @@ namespace UpdateCreator
             if (!Directory.Exists(txtSource.Text))
             {
                 MessageBox.Show("Le dossier de source choisie n'est pas valide");
+                return false;
+            }
+
+            if (Directory.GetFiles(txtSource.Text).Length == 0)
+            {
+                MessageBox.Show("Le dossier source est vide");
+                return false;
+            }
+
+            if (Files.Count == 0)
+            {
+                MessageBox.Show("Vous avez ignorer tous les fichiers du répertoire source. Aucun fichier a exporté");
                 return false;
             }
 
@@ -114,32 +123,28 @@ namespace UpdateCreator
 
         private void ExportFiles()
         {
-            if (!ValidateFolders()) // not valid
-                return;
-
             try
             {
-                var patch = new Patch();
+                if (!ValidateFolders()) // not valid
+                    return;
 
-                patch.LocalFile = Path.Combine(txtDestination.Text, "application.zip");  //prepare path
-                if (!Directory.Exists(txtDestination.Text))
-                    Directory.CreateDirectory(txtDestination.Text);
+                var patch = CreatePatch(); // create patch information and export file to dist directory
 
+                CreateXmlDocument(patch); //create xml and export to dist
 
-                Utils.ZipFileUil.Compress(Directory.GetFiles(txtSource.Text), patch.LocalFile);
+                var filePath = txtDestination.Text;  //open dist folder
 
-                //checksum
-                patch.Checksum = FileChecksum.GetSHA256Checksum(patch.LocalFile);
+                string argument = @"/select, " + filePath;
 
-                patch.Description = txtDescription.Text;
-
-                patch.FileLength = new FileInfo(patch.LocalFile).Length.ToString();
-
-
+                System.Diagnostics.Process.Start("explorer.exe", argument);
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                throw;
+                MessageBox.Show("une erreur s'est produite lors de la préparation du patch"
+                    + Environment.NewLine
+                    + "Detail de l'erreur :"
+                    + Environment.NewLine
+                    + e.Message);
             }
         }
 
@@ -147,29 +152,67 @@ namespace UpdateCreator
         public void CreateXmlDocument(Patch patch)
         {
             var doc = new XmlDocument();
-
-            doc.AppendChild(doc.CreateXmlDeclaration("1.0", "UTF-8", null));
-
-            ////XNamespace appCast = "http://www.adobe.com/xml-namespaces/appcast/1.0";
-            //XElement rss = new XElement("rss", 
-            //    new XAttribute("version", "2.0",
-            //    new XAttribute(XNamespace.Xmlns + "appcast", "http://www.adobe.com/xml-namespaces/appcast/1.0"),
-            //   )
-            //);
-
-
-            
-
-            //XmlNode node = doc.CreateElement("rss");
-            //node.Attributes.Append(doc.CreateAttribute(XNamespace.Xmlns.ToString() + "appcast", "http://www.adobe.com/xml-namespaces/appcast/1.0"));
-
-            //doc.AppendChild(node);
-
-
+            doc.InnerXml = patch.GetXml();
+            doc.Save(Path.Combine(txtDestination.Text, XmlFileName));
 
         }
 
+        public Patch CreatePatch()
+        {
+            var patch = new Patch();
 
+            var zipfileName = string.Format("{0}-{1}.zip", Regex.Replace(txtNom.Text, @"\s", string.Empty), txtVersion.Text);
+
+            patch.LocalFile = Path.Combine(txtDestination.Text, zipfileName);  //prepare path
+            if (!Directory.Exists(txtDestination.Text))
+                Directory.CreateDirectory(txtDestination.Text);
+
+
+            if (Files.Count == 0)
+                Utils.ZipFileUil.Compress(Directory.GetFiles(txtSource.Text), patch.LocalFile);
+            else
+                Utils.ZipFileUil.Compress(txtSource.Text, Files, patch.LocalFile);
+
+            patch.NomApplication = txtNom.Text;
+
+            //checksum
+            patch.Checksum = FileChecksum.GetSHA256Checksum(patch.LocalFile);
+
+            patch.Description = txtDescription.Text;
+
+            patch.FileLength = new FileInfo(patch.LocalFile).Length.ToString();
+
+            txtUrl.Text = txtUrl.Text + Path.GetFileName(patch.LocalFile);
+
+            patch.Url = txtUrl.Text;
+
+            patch.Version = txtVersion.Text;
+
+            return patch;
+        }
+
+        private void btnDetail_Click(object sender, EventArgs e)
+        {
+            var formdetail = new DetailForm();
+            formdetail.OnCloseForm += new DetailForm.FormClosedHandler(formdetail_OnCloseForm);
+            formdetail.Init(Files);
+            formdetail.ShowDialog();
+        }
+
+        void formdetail_OnCloseForm(List<string> files)
+        {
+            Files = files;
+        }
+
+        private void btnFermer_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void txtSource_Leave(object sender, EventArgs e)
+        {
+            btnDetail.Enabled = (!string.IsNullOrEmpty(txtSource.Text) && Directory.Exists(txtSource.Text));
+        }
 
     }
 
@@ -181,7 +224,37 @@ namespace UpdateCreator
         public string Checksum { get; set; }
         public string LocalFile { get; set; }
         public string Description { get; set; }
-        public string DateTime { get { return System.DateTime.Now.ToShortDateString(); } }
+        public string DateCreation { get { return DateTime.Now.ToShortDateString(); } }
         public string FileLength { get; set; }
+
+        #region XMLDATA
+        private const string xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<rss version=""2.0"" xmlns:appcast=""http://www.adobe.com/xml-namespaces/appcast/1.0"">
+  <channel>
+    <title>{0}</title>
+  
+    <item>
+      <title>{0}</title>
+      
+      <description><![CDATA[ {1} ]]></description>
+      <pubDate>{2}</pubDate>
+      <enclosure 
+	      url=""{3}"" 
+	      length=""{4}"" 
+	      type=""application/octet-stream"" 
+		  version=""{5}""
+          checksum=""{6}""/>
+    </item>
+  </channel>
+</rss>";
+        #endregion
+
+
+
+        public string GetXml()
+        {
+            var s = string.Format(xml, NomApplication, Description, DateCreation, Url, FileLength, Version, Checksum);
+            return s;
+        }
     }
 }

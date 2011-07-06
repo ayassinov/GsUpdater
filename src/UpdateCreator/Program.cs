@@ -13,11 +13,9 @@ namespace UpdateCreator
         [STAThread]
         static void Main()
         {
-           // Application.EnableVisualStyles();
-           // Application.SetCompatibleTextRenderingDefault(false);
-           // Application.Run(new MainForm());
-            MainForm f = new MainForm();
-            f.CreateXmlDocument(null);
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new MainForm());
         }
     }
 }
