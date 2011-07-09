@@ -1,8 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
-using System.Threading;
 using System.Windows.Forms;
 using GsUpdater.Framework.FeedReader;
 using GsUpdater.Framework.Sources;
@@ -13,8 +10,6 @@ namespace GsUpdater.Framework
     public class UpdateManager
     {
         public string TempPath { get; private set; }
-        public string UrlFeed { get; set; }
-        public UpdatingState State { get; set; }
 
         private string ApplicationPath { get; set; }
         private string UpdaterTempPath { get; set; }
@@ -22,15 +17,9 @@ namespace GsUpdater.Framework
         public IUpdateTask CurrentUpdate { get; private set; }
         private IUpdateSource CurrentSourceUpdate { get; set; }
 
-        private Version CurrentVersion
-        {
-            get { return Assembly.GetExecutingAssembly().GetName().Version; }
-        }
-
         private UpdateManager()
         {
-            State = UpdatingState.NotChecked;
-            ApplicationPath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+           ApplicationPath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
         }
 
         private static readonly UpdateManager _instance = new UpdateManager();
@@ -40,13 +29,13 @@ namespace GsUpdater.Framework
             get { return _instance; }
         }
 
-        public bool CheckForUpdate()
+        public bool CheckForUpdate(string feedUrl, Version version)
         {
             try
             {
                 CurrentSourceUpdate = new WebSource();
-                CurrentUpdate = new AppcastReader().Read(CurrentSourceUpdate.GetUpdatesFeed(UrlFeed));
-                int cpr = CurrentUpdate.FileVersion.CompareTo(CurrentVersion);
+                CurrentUpdate = new AppcastReader().Read(CurrentSourceUpdate.GetUpdatesFeed(feedUrl));
+                int cpr = CurrentUpdate.FileVersion.CompareTo(version);
                 return cpr > 0;
             }
             catch (Exception e)
@@ -58,12 +47,6 @@ namespace GsUpdater.Framework
                     + e.Message);
                 return false;
             }
-        }
-
-        public bool CheckForUpdate(string feedUrl)
-        {
-            UrlFeed = feedUrl;
-            return CheckForUpdate();
         }
 
         private bool PrepareUpdate()
@@ -105,8 +88,6 @@ namespace GsUpdater.Framework
                 ApplicationPath);
 
             updStarter.Start();
-
-            State = UpdatingState.Updated;
         }
 
         public void Clear()

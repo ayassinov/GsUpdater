@@ -31,16 +31,16 @@ namespace GsUpdater.Framework.Tasks
                 if (!Directory.Exists(UpdateManager.Instance.TempPath))
                     Directory.CreateDirectory(UpdateManager.Instance.TempPath);
 
-                //download zip file to tmp folder.))
+                //download zip file to tmp folder
                 if (!source.DownloadUpdate(RemotePath, PathToZippedUpdate))
-                    return false; //todo throw an exception
+                    throw new Exception("Impossible de télécharger la mise à jour");
 
                 //check file checksum  
                 if (!string.IsNullOrEmpty(Checksum))
                 {
                     string checksum = FileChecksum.GetSHA256Checksum(PathToZippedUpdate);
                     if (!checksum.Equals(Checksum))
-                        return false; //todo throw an exception
+                        throw new Exception("Le fichier de mise à jour téléchargé n'est pas valide");
                 }
 
                 //extract file to temp folder and delete the zip file.
@@ -50,10 +50,10 @@ namespace GsUpdater.Framework.Tasks
                 if (File.Exists(PathToZippedUpdate))
                     File.Delete(PathToZippedUpdate);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                //todo gerer exception
                 Clear();
+                throw;
             }
 
             return true;

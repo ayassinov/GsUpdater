@@ -1,3 +1,4 @@
+using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace GsUpdater.Framework.Test
@@ -10,7 +11,7 @@ namespace GsUpdater.Framework.Test
         [TestMethod]
         public void DoUpdateTest()
         {
-            var isUpdateExist = UpdateManager.Instance.CheckForUpdate(FeedUrl);
+            var isUpdateExist = UpdateManager.Instance.CheckForUpdate(FeedUrl, new Version("5.0"));
             Assert.IsTrue(isUpdateExist);
             UpdateManager.Instance.DoUpdate();
             //todo check this test

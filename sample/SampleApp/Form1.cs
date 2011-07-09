@@ -16,7 +16,7 @@ namespace SampleApp
         public Form1()
         {
             InitializeComponent();
-            
+
         }
 
         public string Param1 { get; set; }
@@ -32,7 +32,8 @@ namespace SampleApp
 
         private void btnCheck_Click(object sender, EventArgs e)
         {
-           var updateExist = UpdateManager.Instance.CheckForUpdate("http://localhost/TestFeed.xml");
+            Version version = Assembly.GetExecutingAssembly().GetName().Version;
+            var updateExist = UpdateManager.Instance.CheckForUpdate("http://localhost/TestFeed.xml", version);
             if (updateExist)
             {
                 btnInstall.Enabled = true;

@@ -58,7 +58,6 @@
     <Compile Include="Tasks\IUpdateTask.cs" />
     <Compile Include="UpdateManager.cs" />
     <Compile Include="UpdateStarter.cs" />
-    <Compile Include="UpdatingState.cs" />
     <Compile Include="Utils\FileChecksum.cs" />
     <Compile Include="Utils\ZipFileUil.cs" />
   </ItemGroup>

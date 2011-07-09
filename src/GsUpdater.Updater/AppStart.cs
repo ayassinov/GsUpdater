@@ -23,7 +23,6 @@ namespace GsUpdater.Updater
         {
             try
             {
-                Debugger.Launch();
                 using (var pipeClient = new NamedPipeClientStream(".", "gsupdater", PipeDirection.In))
                 {
                     pipeClient.Connect();
